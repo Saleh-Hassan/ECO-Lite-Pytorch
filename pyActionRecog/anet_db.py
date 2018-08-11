@@ -1,6 +1,3 @@
-from .utils import *
-
-
 class Instance(object):
     """
     Representing an instance of activity in the videos

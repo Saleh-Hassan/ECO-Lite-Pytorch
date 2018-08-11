@@ -33,6 +33,7 @@ class ECO(nn.Module):
                 self._op_list.append((id, op, out_name, in_name))
             elif op == 'Concat':
                 self._op_list.append((id, op, out_var[0], in_var))
+                print("concat id: " + id)
                 channel = sum([self._channel_dict[x] for x in in_var])
                 self._channel_dict[out_var[0]] = channel
             else:
@@ -44,14 +45,11 @@ class ECO(nn.Module):
         # load pretrained model on other dataset
         model_dict = self.state_dict()
 
-        pretrained_on_kin = torch.utils.model_zoo.load_url(weight_url)
+        pretrained_on_kin = torch.utils.model_zoo.load_url(weight_url, map_location='cpu')
         new_state_dict = {k[18:]: v for k, v in pretrained_on_kin['state_dict'].items() if k[18:] in model_dict}
-        
 
         # init the layer names which is not in pretrained model dict
         un_init_dict_keys = [k for k in model_dict.keys() if k not in new_state_dict]
-
-        print(un_init_dict_keys)
 
         std = 0.001
         for k in un_init_dict_keys:

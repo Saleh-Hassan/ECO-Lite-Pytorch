@@ -23,12 +23,6 @@ def main():
 
     if args.dataset == 'ucf101':
         num_class = 101
-    elif args.dataset == 'hmdb51':
-        num_class = 51
-    elif args.dataset == 'kinetics':
-        num_class = 400
-    elif args.dataset == 'something':
-        num_class = 174
     else:
         raise ValueError('Unknown dataset '+args.dataset)
 
@@ -47,14 +41,13 @@ def main():
     # and should contain a params key, containing a list of parameters belonging to it. 
     # Other keys should match the keyword arguments accepted by the optimizers, 
     # and will be used as optimization options for this group.
-    if args.arch == "BN2to1D":
-        policies = model.get_optim_policies_BN2to1D()
-    else:
-        policies = model.get_optim_policies()
+
+    policies = model.get_optim_policies()
 
     train_augmentation = model.get_augmentation()
 
-    model = torch.nn.DataParallel(model, device_ids=args.gpus).cuda()
+    # model = torch.nn.DataParallel(model, device_ids=args.gpus).cuda()
+    model = torch.nn.DataParallel(model)
 
     if args.resume:
         if os.path.isfile(args.resume):
@@ -71,15 +64,10 @@ def main():
     cudnn.benchmark = True
 
     # Data loading code
-    if args.modality != 'RGBDiff':
-        normalize = GroupNormalize(input_mean, input_std)
-    else:
-        normalize = IdentityTransform()
+    normalize = GroupNormalize(input_mean, input_std)
 
     if args.modality == 'RGB':
         data_length = 1
-    elif args.modality in ['Flow', 'RGBDiff']:
-        data_length = 5
 
     train_loader = torch.utils.data.DataLoader(
         TSNDataSet("", args.train_list, num_segments=args.num_segments,
@@ -113,7 +101,8 @@ def main():
 
     # define loss function (criterion) and optimizer
     if args.loss_type == 'nll':
-        criterion = torch.nn.CrossEntropyLoss().cuda()
+        # criterion = torch.nn.CrossEntropyLoss().cuda()
+        criterion = torch.nn.CrossEntropyLoss()
     else:
         raise ValueError("Unknown loss type")
 
@@ -169,18 +158,34 @@ def train(train_loader, model, criterion, optimizer, epoch):
     end = time.time()
     for i, (input, target) in enumerate(train_loader):
         # discard final batch
+        print("input....")
+        print(input.size())
+        print("target......")
+        print(target.size())
         if i == len(train_loader)-1:
             break
         # measure data loading time
         data_time.update(time.time() - end)
 
         # target size: [batch_size]
-        target = target.cuda(async=True)
+        # target = target.cuda(async=True)
         input_var = torch.autograd.Variable(input)
         target_var = torch.autograd.Variable(target)
 
         # compute output, output size: [batch_size, num_class]
         output = model(input_var)
+
+        print("printing output.......")
+
+        for ind in range(32):
+            print("printing output: {} with validation {}".format(output[ind][target_var[ind]], target_var[ind]))
+        # print(output.size())
+        # print(output[0])
+        # print(output[0].sum())
+        # print(output[31])
+        # print(output[31].sum())
+        # print(target_var)
+        # print(output)
 
         loss = criterion(output, target_var)
 
@@ -247,7 +252,7 @@ def validate(val_loader, model, criterion, iter, logger=None):
         # discard final batch
         if i == len(val_loader)-1:
             break
-        target = target.cuda(async=True)
+        # target = target.cuda(async=True)
         input_var = torch.autograd.Variable(input, volatile=True)
         target_var = torch.autograd.Variable(target, volatile=True)
 
