@@ -1,6 +1,5 @@
 # ECO-pytorch
 
-* This unofficial repo implements the ECO network structure with PyTorch, official repo is [here](https://github.com/mzolfaghari/ECO-efficient-video-understanding).
 * Pre-trained model for 2D-Net is provided by [tsn-pytorch](https://github.com/yjxiong/tsn-pytorch), and 3D-Net use the Kinetics-pretrained model of 3D-Resnet18 provided by [3D-ResNets-PyTorch](https://github.com/kenshohara/3D-ResNets-PyTorch).
 * Codes modified from [tsn-pytorch](https://github.com/yjxiong/tsn-pytorch).
 
